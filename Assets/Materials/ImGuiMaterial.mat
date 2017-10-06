@@ -6,13 +6,13 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: UiMaterial
-  m_Shader: {fileID: 4800000, guid: 599a304deb9c04423b29d7fcd911f27f, type: 3}
+  m_Name: ImGuiMaterial
+  m_Shader: {fileID: 4800000, guid: 7816507b108c34b23a67cf5eda0f8547, type: 3}
   m_ShaderKeywords: _ALPHATEST_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:

@@ -1,4 +1,4 @@
-﻿Shader "Custom/UiShader" {
+﻿Shader "Custom/ImGuiShader" {
 	Properties {
 		_MainTex ("Texture", 2D) = "white" {}
 	}
