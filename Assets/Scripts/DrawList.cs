@@ -10,13 +10,9 @@ namespace ImGui {
 		readonly List<Color> colorList = new List<Color>();
 		readonly List<int> triangleList = new List<int>();
 
-		readonly Mesh mesh;
+		public readonly Mesh mesh = new Mesh();
 
 		DrawContext context;
-
-		public DrawList(Mesh mesh) {
-			this.mesh = mesh;
-		}
 
 		public void ClearMesh() {
 			mesh.Clear();
@@ -36,7 +32,7 @@ namespace ImGui {
 			return mesh;
 		}
 
-		public void SetDrawingContext(DrawContext context) {
+		public void SetContext(DrawContext context) {
 			this.context = context;
 		}
 			
@@ -61,7 +57,7 @@ namespace ImGui {
 			return new Vector2(xMax - font.spacingHoriz * scale, -(y - size));
 		}
 
-		public Vector2 AddText(BitmapFont font, Color color, Vector2 pos, string text, float size, bool wrap = false) {
+		public Vector2 AddText(BitmapFont font, Color color, Vector2 pos, string text, float size, bool wrap = false, float right = -1) {
 			float scale = size / font.fontSize;
 			Vector2 textureScale = new Vector2(1f / font.scaleW, 1f / font.scaleH);
 
@@ -77,7 +73,7 @@ namespace ImGui {
 				} else if (font.HasGlyph(uc)) {
 					BitmapFont.Glyph g = font.GetGlyph(uc);
 
-					if (wrap && x + (g.xOffset + g.width) * scale > context.right) {  // Wrap text
+					if (wrap && x + (g.xOffset + g.width) * scale > (right < 1 ? context.right : right)) {  // Wrap text
 						x = pos.x;
 						y -= size;
 					}
@@ -106,7 +102,9 @@ namespace ImGui {
 			return new Vector2(xMax - font.spacingHoriz * scale, y - size);
 		}
 
-		public void AddRoundedRectFill(Color color, Vector2 a, Vector2 b, float radius, RectCorner corners = RectCorner.All, int segments = 3) {
+		public Vector2 AddRoundedRectFill(Color color, Vector2 a, Vector2 b, float radius, RectCorner corners = RectCorner.All, int segments = 3) {
+			if (radius < 1) return AddRectFill(color, a, b);
+
 			bool roundTopLeft = ((corners & RectCorner.TopLeft) != 0);
 			bool roundTopRight = ((corners & RectCorner.TopRight) != 0);
 			bool roundBottomLeft = ((corners & RectCorner.BottomLeft) != 0);
@@ -150,22 +148,26 @@ namespace ImGui {
 				roundTopRight ? new Vector2(xMax0, yMax1) : v02,
 				roundBottomRight ? new Vector2(xMax0, yMin1) : v03);
 
-			if (roundBottomLeft) AddFanFill(color, v10, radius, 6, 6 + segments + 1, segments * 4);
-			if (roundTopLeft) AddFanFill(color, v11, radius, 3, 3 + segments + 1, segments * 4);
-			if (roundTopRight) AddFanFill(color, v12, radius, 0, 0 + segments + 1, segments * 4);
-			if (roundBottomRight) AddFanFill(color, v13, radius, 9, 9 + segments + 1, segments * 4);
+			if (roundBottomLeft) AddFanFill(color, v10, radius, 6, 6 + segments, segments * 4);
+			if (roundTopLeft) AddFanFill(color, v11, radius, 3, 3 + segments, segments * 4);
+			if (roundTopRight) AddFanFill(color, v12, radius, 0, 0 + segments, segments * 4);
+			if (roundBottomRight) AddFanFill(color, v13, radius, 9, 9 + segments, segments * 4);
+
+			return v03;
 		}
 
 		public void AddFanFill(Color color, Vector2 center, float radius, int begin = 0, int end = 12, int segments = 12) {
-			int size = end - begin;
+			int size = end + 1 - begin;
 			var vs = new Vector3[size + 1];
-			for (int i = begin, j = 0; i < end; i++, j++) {
+			for (int i = begin, j = 0; i <= end; i++, j++) {
 				float a = (float)i / segments * 2 * Mathf.PI;
 				vs[j].x = Mathf.Cos(a);
 				vs[j].y = Mathf.Sin(a);
 				vs[j] = (Vector3)center + (vs[j] * radius);
 			}
 			vs[size] = center;
+
+			if (ShouldClip(vs)) return;
 
 			int vi = AddVertices(color, vs);
 			for (int i = 0; i < size - 1; i++) {
@@ -240,12 +242,12 @@ namespace ImGui {
 				begin);
 		}
 
-		bool ShouldClip(params Vector2[] vs) {
-			if (context == null) return true;
-
-			foreach (var v in vs) {
-				if (!context.Contains(v)) return true;
-			}
+		bool ShouldClip(params Vector3[] vs) {
+//			if (context == null) return true;
+//
+//			foreach (var v in vs) {
+//				if (!context.Contains(v)) return true;
+//			}
 
 			return false;
 		}
@@ -286,12 +288,11 @@ namespace ImGui {
 		}
 
 		public void DrawGizmos() {
-			for (int i = 0; i < vertexList.Count; i++) {
-				Gizmos.color = colorList[i];
-				Gizmos.DrawSphere(vertexList[i], 0.05f);
-			}
+//			for (int i = 0; i < vertexList.Count; i++) {
+//				Gizmos.color = colorList[i];
+//				Gizmos.DrawSphere(vertexList[i], 1f);
+//			}
 
-			Gizmos.color = Color.green;
 			for (int i = 0; i < triangleList.Count; i += 3) {
 				DrawArrow(vertexList[triangleList[i]], vertexList[triangleList[i + 1]]);
 				DrawArrow(vertexList[triangleList[i + 1]], vertexList[triangleList[i + 2]]);
@@ -340,8 +341,9 @@ namespace ImGui {
 			AddRoundedRectFill(ColorPreset.WindowBg, new Vector2(120, 0), new Vector2(120, 0) + Style.WindowMinSize, Style.WindowRounding, RectCorner.Right);
 			AddRoundedRectFill(ColorPreset.WindowBg, new Vector2(120, 40), new Vector2(120, 40) + Style.WindowMinSize, Style.WindowRounding, RectCorner.Left);
 
-			AddFanFill(ColorPreset.Button, Vector2.left, 20f, 0, 19, 36);
-			AddText(font, ColorPreset.Text, Vector2.zero, "Hellow, world!\nFrom Dear ImGUI\nfor (int i = 0; i < count; i++) {\n\tconsole.log();\n}", 13);
+			AddFanFill(ColorPreset.Button, Vector2.left, 20f, 0, 18, 36);
+			AddCircleFill(ColorPreset.TextDisabled, Vector2.left * 50, 10f);
+			AddText(font, ColorPreset.Text, Vector2.up * 100, "Hellow, world!\nFrom Dear ImGUI\nfor (int i = 0; i < count; i++) {\n\tconsole.log();\n}", 13);
 		}
 	}
 }

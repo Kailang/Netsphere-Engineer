@@ -14,7 +14,7 @@ namespace ImGui {
 		// Radius of child window corners rounding. Set to 0.0f to have rectangular child windows
 		public static Vector2 FramePadding = new Vector2(4, 3);
 		// Padding within a framed rectangle (used by most widgets)
-		public static float FrameRounding = 0.0f;
+		public static float FrameRounding = 3.0f;
 		// Radius of frame corners rounding. Set to 0.0f to have rectangular frames (used by most widgets).
 		public static Vector2 ItemSpacing = new Vector2(8, 4);
 		// Horizontal and vertical spacing between widgets/lines
@@ -48,9 +48,11 @@ namespace ImGui {
 		// Tessellation tolerance. Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality.
 
 		public static float FontSize = 13;
+		public static Vector2 FontSquare { get { return new Vector2(FontSize, FontSize); } }
+
 		public static float TitleHeight { get { return FontSize + FramePadding.y * 2; } }
 		public static float KeyRepeatDelay = 0.250f;
-		public static float KeyRepeatRate = 0.050f;
+		public static float KeyRepeatRate = 0.100f;
 	}
 }
 

@@ -47,24 +47,12 @@ namespace ImGui {
 			height = -Mathf.Abs(extent.y);
 		}
 
-		public Vector2 FromTop(float height) {
-			return new Vector2(right, top - height);
-		}
-
-		public Vector2 FromBottom(float height) {
-			return new Vector2(right, bottom + height);
-		}
-
-		public Vector2 FromLeft(float width) {
-			return new Vector2(left + width, bottom);
-		}
-
-		public Vector2 FromRight(float width) {
-			return new Vector2(right - width, bottom);
-		}
-
 		public Vector2 FromRoot(Vector2 extent) {
 			return new Vector2(root.x + Mathf.Abs(extent.x), root.y - Mathf.Abs(extent.y));
+		}
+
+		public Vector2 FromMax(Vector2 extent) {
+			return new Vector2(max.x - Mathf.Abs(extent.x), max.y - Mathf.Abs(extent.y));
 		}
 
 		public Vector2 FromCursor(Vector2 extent) {
@@ -89,12 +77,14 @@ namespace ImGui {
 		 * <ItemSpacing.y>
 		 * <--
 		 */
-		public void NextItem(Vector2 pos) {
+		public void NextItem(Vector2 pos, Vector2 spacing, bool newLine = true) {
 			contentSize = new Vector2(Mathf.Max(contentSize.x, pos.x - root.x), Mathf.Max(contentSize.y, root.y - pos.y));
 
 			lineHeightPrev_ = Mathf.Min(pos.y, lineHeightPrev_);
 			cursorPrev_ = new Vector2(pos.x, cursor.y);
-			cursor = new Vector2(root.x, lineHeightPrev_ - Style.ItemSpacing.y);
+			cursor = newLine ? 
+				new Vector2(root.x, lineHeightPrev_ - spacing.y) : 
+				new Vector2(cursorPrev_.x + spacing.x, cursorPrev_.y);
 		}
 
 		/**
@@ -105,8 +95,12 @@ namespace ImGui {
 		 * <ItemSpacing.y>
 		 * cursor
 		 */
-		public void BackCursor() {
-			cursor = new Vector2(cursorPrev_.x + Style.ItemSpacing.x, cursorPrev_.y);
+		public void BackCursor(Vector2 spacing) {
+			cursor = new Vector2(cursorPrev_.x + spacing.x, cursorPrev_.y);
+		}
+
+		public void ShiftCursor(Vector2 offset) {
+			cursor += offset;
 		}
 
 		public bool Contains(Vector2 point) {
@@ -132,8 +126,10 @@ namespace ImGui {
 			return new DrawContext(r, s);
 		}
 
-		public Vector2 CalcSize(Vector2 contentSize) {
-			return new Vector2(contentSize.x + padLeft + padRight, contentSize.y + padTop + padBottom);
+		public Vector2 CalcSize(Vector2 contentSize, bool fitWidth = true, bool fitHeight = true) {
+			return new Vector2(
+				fitWidth ? contentSize.x + padLeft + padRight : width, 
+				fitHeight ? contentSize.y + padTop + padBottom : height);
 		}
 	}
 }
